@@ -1,6 +1,5 @@
 import request from "superagent";
 
-import logo from './logo.svg';
 import './App.css';
 
 request.get("http://localhost:8000/api").then((res) => console.log(res));
@@ -9,20 +8,23 @@ function App() {
   return (
     <div className="App">
       <div className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <div>
+          DOI:
+          <input type="text"/>
+          <input type="button" value="Show" />
+          or
+          <input type="button" value="Random" />
+        </div>
+        <div>
+          <p>Examples:</p>
+          <ul>
+            <li><span>123</span></li>
+            <li><span>123</span></li>
+            <li><span>123</span></li>
+          </ul>
+        </div>
       </div>
-      <div>
+      <div className="App-content">
 
       </div>
     </div>
