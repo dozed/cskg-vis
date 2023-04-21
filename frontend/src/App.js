@@ -2,7 +2,7 @@ import request from "superagent";
 
 import './App.css';
 
-request.get("http://localhost:8000/api").then((res) => console.log(res));
+request.get("http://localhost:7000/api").then((res) => console.log(res));
 
 function App() {
   return (
