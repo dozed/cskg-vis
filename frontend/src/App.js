@@ -30,7 +30,7 @@ const mkGraph = (edges) => {
 
   edges.forEach((e, i) => {
     if (!check.has(`${e.s}-${e.o}`) && !check.has(`${e.o}-${e.s}`)) {
-      graph.addEdgeWithKey(`${e.p}-${i}`, e.s, e.o, { label: e.p });
+      graph.addEdgeWithKey(`${e.p}-${i}`, e.s, e.o, { type: "arrow", label: e.p });
       check.add(`${e.s}-${e.o}`)
     }
   });
