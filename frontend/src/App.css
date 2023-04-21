@@ -1,11 +1,5 @@
-/** {*/
-/*  margin: 0;*/
-/*  box-sizing: border-box;*/
-/*}*/
-
 body {
   background-color: #282c34;
-  font-size: calc(10px + 2vmin);
   color: white;
 }
 
@@ -16,6 +10,16 @@ body {
 }
 
 .App-header {
+}
+
+.search-bar {
+  display: flex;
+  flex-direction: row;
+}
+
+.doi-input {
+  padding: 5px;
+  width: 100%;
 }
 
 .App-content {

@@ -8,7 +8,9 @@ import ForceSupervisor from "graphology-layout-force/worker";
 
 const exampleDois = [
   'https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491',
-  'https://doi.org/10.18653/v1/2020.coling-main.448'
+  'https://doi.org/10.1109/SMC.2017.8122756',
+  'https://doi.org/10.1109/IROS.2013.6696437'
+  // 'https://doi.org/10.18653/v1/2020.coling-main.448'
 ];
 
 const getPartialDoi = (doi) => {
@@ -132,9 +134,9 @@ const App = () => {
   return (
     <div className="App">
       <div className="App-header">
-        <div>
+        <div className="search-bar">
           DOI:
-          <input type="text" value={doi} onChange={(e) => setDoi(e.target.value)} />
+          <input className="doi-input" type="text" value={doi} onChange={(e) => setDoi(e.target.value)} />
           <input type="button" value="Show" />
           or
           <input type="button" value="Random" onClick={() => fetchRandomDoi()} />
