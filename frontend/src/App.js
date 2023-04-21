@@ -2,7 +2,7 @@ import request from "superagent";
 
 import './App.css';
 
-request.get("http://localhost:7000/api").then((res) => console.log(res));
+request.get('/api/statements/by-doi/10.5591/978-1-57735-516-8/IJCAI11-491').then((res) => console.log(res));
 
 function App() {
   return (
