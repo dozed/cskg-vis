@@ -70,7 +70,7 @@ def get_statements(doi: str) -> dict:
     }
 
 
-def get_random_doi() -> str:
+def get_random_doi() -> dict:
     sparql = SPARQLWrapper('https://scholkg.kmi.open.ac.uk/sparqlendpoint/')
     sparql.setReturnFormat(JSON)
 
