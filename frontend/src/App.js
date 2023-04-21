@@ -1,13 +1,10 @@
 import request from "superagent";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import MultiDirectedGraph from "graphology";
-import {SigmaContainer, useLoadGraph, useRegisterEvents, useSigma} from "@react-sigma/core";
-import {useWorkerLayoutForceAtlas2} from "@react-sigma/layout-forceatlas2";
-import {useLayoutCircular} from "@react-sigma/layout-circular";
-import "@react-sigma/core/lib/react-sigma.min.css";
 
 import './App.css';
-import {useLayoutForce} from "@react-sigma/layout-force";
+import Sigma from "sigma";
+import ForceSupervisor from "graphology-layout-force/worker";
 
 const exampleDois = [
   'https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491',
@@ -18,123 +15,108 @@ const getPartialDoi = (doi) => {
   return doi.replace('https://doi.org/', '');
 }
 
-const ForceAtlas2Layout = () => {
-  const { start, kill, isRunning } = useWorkerLayoutForceAtlas2({ settings: { slowDown: 10 } });
+const mkGraph = (edges) => {
+  const nodes = new Set(edges.map(e => e.s).concat(edges.map(e => e.o)));
+  const check = new Set();
 
-  useEffect(() => {
-    // start FA2
-    start();
-    return () => {
-      // Kill FA2 on unmount
-      kill();
-    };
-  }, [start, kill]);
+  const graph = new MultiDirectedGraph();
 
-  return null;
+  nodes.forEach(n => {
+    graph.addNode(n, { size: 15, label: n, color: "#FA4F40" });
+  });
+
+  edges.forEach((e, i) => {
+    if (!check.has(`${e.s}-${e.o}`)) {
+      graph.addEdgeWithKey(`${e.p}-${i}`, e.s, e.o, { label: e.p });
+      check.add(`${e.s}-${e.o}`)
+    }
+  });
+
+  graph.nodes().forEach((node, i) => {
+    const angle = (i * 2 * Math.PI) / graph.order;
+    graph.setNodeAttribute(node, "x", 100 * Math.cos(angle));
+    graph.setNodeAttribute(node, "y", 100 * Math.sin(angle));
+  });
+
+  return graph;
 };
 
-const GraphEvents = () => {
-  const registerEvents = useRegisterEvents();
-  const sigma = useSigma();
-  const [draggedNode, setDraggedNode] = useState(null);
+const mkSigma = (graph, container) => {
+  const renderer = new Sigma(graph, container, {
+    // We don't have to declare edgeProgramClasses here, because we only use the default ones ("line" and "arrow")
+    // nodeProgramClasses: {
+    //   image: getNodeProgramImage(),
+    //   border: NodeProgramBorder,
+    // },
+    renderEdgeLabels: true,
+    allowInvalidContainer: true
+  });
 
-  useEffect(() => {
-    // Register the events
-    registerEvents({
-      downNode: (e) => {
-        setDraggedNode(e.node);
-        sigma.getGraph().setNodeAttribute(e.node, "highlighted", true);
-      },
-      mouseup: (e) => {
-        if (draggedNode) {
-          setDraggedNode(null);
-          sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
-        }
-      },
-      mousedown: (e) => {
-        // Disable the autoscale at the first down interaction
-        if (!sigma.getCustomBBox()) sigma.setCustomBBox(sigma.getBBox());
-      },
-      mousemove: (e) => {
-        if (draggedNode) {
-          // Get new position of node
-          const pos = sigma.viewportToGraph(e);
-          sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
-          sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
+  const layout = new ForceSupervisor(graph);
 
-          // Prevent sigma to move camera:
-          e.preventSigmaDefault();
-          e.original.preventDefault();
-          e.original.stopPropagation();
-        }
-      },
-      touchup: (e) => {
-        if (draggedNode) {
-          setDraggedNode(null);
-          sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
-        }
-      },
-      touchdown: (e) => {
-        // Disable the autoscale at the first down interaction
-        if (!sigma.getCustomBBox()) sigma.setCustomBBox(sigma.getBBox());
-      },
-      touchmove: (e) => {
-        if (draggedNode) {
-          // Get new position of node
-          const pos = sigma.viewportToGraph(e);
-          sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
-          sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
+  let draggedNode = null;
+  let isDragging = false;
 
-          // Prevent sigma to move camera:
-          e.preventSigmaDefault();
-          e.original.preventDefault();
-          e.original.stopPropagation();
-        }
-      },
-    });
-  }, [registerEvents, sigma, draggedNode]);
+  renderer.on("downNode", (e) => {
+    isDragging = true;
+    draggedNode = e.node;
+    graph.setNodeAttribute(draggedNode, "highlighted", true);
+  });
 
-  return null;
-};
+  // On mouse move, if the drag mode is enabled, we change the position of the draggedNode
+  renderer.getMouseCaptor().on("mousemovebody", (e) => {
+    if (!isDragging || !draggedNode) return;
 
-const StatementsGraph = ({ graph }) => {
-  const { positions, assign } = useLayoutCircular();
-  // const { positions, assign } = useLayoutForce();
-  const loadGraph = useLoadGraph();
+    // Get new position of node
+    const pos = renderer.viewportToGraph(e);
 
-  useEffect(() => {
-    loadGraph(graph);
-    assign();
-  }, [loadGraph, assign, positions, graph]);
+    graph.setNodeAttribute(draggedNode, "x", pos.x);
+    graph.setNodeAttribute(draggedNode, "y", pos.y);
 
-  return null;
-};
+    // Prevent sigma to move camera:
+    e.preventSigmaDefault();
+    e.original.preventDefault();
+    e.original.stopPropagation();
+  });
+
+  // On mouse up, we reset the autoscale and the dragging mode
+  renderer.getMouseCaptor().on("mouseup", () => {
+    if (draggedNode) {
+      graph.removeNodeAttribute(draggedNode, "highlighted");
+    }
+    isDragging = false;
+    draggedNode = null;
+  });
+
+  // Disable the autoscale at the first down interaction
+  renderer.getMouseCaptor().on("mousedown", () => {
+    layout.stop();
+    if (!renderer.getCustomBBox()) renderer.setCustomBBox(renderer.getBBox());
+  });
+
+  layout.start();
+
+  return renderer;
+}
 
 const App = () => {
   const [doi, setDoi] = useState('');
-  const [graph, setGraph] = useState(new MultiDirectedGraph());
+  const [sigma, setSigma] = useState(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (doi) {
       const partialDoi = getPartialDoi(doi);
       request.get(`/api/statements/by-doi/${partialDoi}`)
         .then((res) => {
-          console.log(res.body.data);
+          if (sigma) {
+            sigma.kill();
+          }
 
-          const edges = res.body.data;
-          const nodes = new Set(edges.map(e => e.s).concat(edges.map(e => e.o)));
+          const graph = mkGraph(res.body.data);
+          const renderer = mkSigma(graph, containerRef.current);
 
-          const graph = new MultiDirectedGraph();
-
-          nodes.forEach(n => {
-            graph.addNode(n, { x: 0, y: 0, size: 15, label: n, color: "#FA4F40" });
-          });
-
-          edges.forEach((e, i) => {
-            graph.addEdgeWithKey(`${e.p}-${i}`, e.s, e.o, { label: e.p });
-          });
-
-          setGraph(graph);
+          setSigma(renderer);
         });
     }
   }, [doi]);
@@ -168,13 +150,7 @@ const App = () => {
           </ul>
         </div>
       </div>
-      <div className="App-content">
-        <SigmaContainer style={{ flex: 1, height: "auto", width: "auto" }} graph={MultiDirectedGraph}>
-          <StatementsGraph graph={graph} />
-          {/*<ForceAtlas2Layout />*/}
-          <GraphEvents />
-        </SigmaContainer>
-      </div>
+      <div className="App-content" ref={containerRef} />
     </div>
   );
 }

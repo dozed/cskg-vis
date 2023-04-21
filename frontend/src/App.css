@@ -21,6 +21,7 @@ body {
 .App-content {
   flex: 1;
   display: flex;
+  background-color: #ffffff;
 }
 
 ul.example-dois li {
