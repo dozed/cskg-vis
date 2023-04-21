@@ -1,0 +1,15 @@
+[Unit]
+Description=cskg-vis
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+WorkingDirectory=/opt/cskg-vis
+ExecStart=/opt/miniconda3/envs/cskg-vis/bin/uvicorn app.api:app --host 127.0.0.1 --port 7000
+User=www-data
+Type=simple
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
