@@ -14,6 +14,7 @@ function getPartialDoi(doi) {
 
 function App() {
   const [doi, setDoi] = useState(null);
+
   useEffect(() => {
     if (doi) {
       const partialDoi = getPartialDoi(doi);
@@ -24,6 +25,14 @@ function App() {
     }
   }, [doi]);
 
+  function fetchRandomDoi() {
+    request.get(`/api/dois/random`)
+      .then((res) => {
+        const doi = res.body.data;
+        setDoi(doi);
+      });
+  }
+
   return (
     <div className="App">
       <div className="App-header">
@@ -32,7 +41,7 @@ function App() {
           <input type="text" value={doi} />
           <input type="button" value="Show" />
           or
-          <input type="button" value="Random" />
+          <input type="button" value="Random" onClick={() => fetchRandomDoi()} />
         </div>
         <div>
           <p>Examples:</p>
