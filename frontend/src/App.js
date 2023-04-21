@@ -1,10 +1,10 @@
 import request from 'superagent';
 import {useEffect, useRef, useState} from 'react';
+import Sigma from 'sigma';
 import MultiDirectedGraph from 'graphology';
+import ForceSupervisor from 'graphology-layout-force/worker';
 
 import './App.css';
-import Sigma from 'sigma';
-import ForceSupervisor from 'graphology-layout-force/worker';
 
 const exampleDois = [
   'https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491',
