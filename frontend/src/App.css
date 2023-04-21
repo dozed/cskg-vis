@@ -20,8 +20,14 @@ body {
 
 .App-content {
   flex: 1;
+  display: flex;
 }
 
 ul.example-dois li {
   cursor: pointer;
 }
+
+ul.example-dois li:hover {
+  text-decoration: underline;
+}
+
