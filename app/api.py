@@ -30,9 +30,9 @@ def is_ok(i: dict) -> bool:
 
     if p.endswith('By'):
         return False
-    elif p == 'cskg-ont:methodBases':
+    elif p == 'http://scholkg.kmi.open.ac.uk/cskg/ontology#methodBases':
         return False
-    elif p == 'skos:narrower':
+    elif p == 'http://www.w3.org/2004/02/skos/core#narrower':
         return False
     else:
         return True
