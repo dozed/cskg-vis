@@ -50,6 +50,7 @@ def get_statements(doi: str) -> dict:
         PREFIX cso: <http://cso.kmi.open.ac.uk/schema/cso#> 
 
         SELECT ?s ?p ?o
+        FROM <http://scholkg.kmi.open.ac.uk/cskg> 
         WHERE {{
           ?paper a cskg-ont:MagPaper ;
               cskg-ont:hasDOI "{doi}" .
@@ -66,6 +67,36 @@ def get_statements(doi: str) -> dict:
 
     return {
         'data': papers_statements
+    }
+
+
+def get_random_doi() -> str:
+    sparql = SPARQLWrapper('https://scholkg.kmi.open.ac.uk/sparqlendpoint/')
+    sparql.setReturnFormat(JSON)
+
+    sparql.setQuery(f"""
+        PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+        PREFIX cskg: <http://scholkg.kmi.open.ac.uk/cskg/resource/>
+        PREFIX cskg-ont: <http://scholkg.kmi.open.ac.uk/cskg/ontology#>
+        PREFIX provo: <http://www.w3.org/ns/prov#> 
+        PREFIX cso: <http://cso.kmi.open.ac.uk/schema/cso#> 
+         
+        SELECT ?doi
+        FROM <http://scholkg.kmi.open.ac.uk/cskg> 
+        WHERE {{
+            ?s a cskg-ont:MagPaper ;
+             cskg-ont:hasDOI ?doi .
+          FILTER ( 1>  <SHORT_OR_LONG::bif:rnd>  (10000, ?s, ?p, ?o))
+        }}
+        LIMIT 1
+        """)
+
+    ret = sparql.queryAndConvert()
+
+    doi = ret['results']['bindings'][0]['doi']['value']
+
+    return {
+        'data': doi
     }
 
 
@@ -89,4 +120,10 @@ app.add_middleware(
 async def read_root(doi) -> dict:
     full_doi = f'https://doi.org/{doi}'
     res = get_statements(full_doi)
+    return res
+
+
+@app.get("/api/dois/random", tags=["root"])
+async def read_root() -> dict:
+    res = get_random_doi()
     return res
