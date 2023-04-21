@@ -9,7 +9,8 @@ import ForceSupervisor from "graphology-layout-force/worker";
 const exampleDois = [
   'https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491',
   'https://doi.org/10.1109/SMC.2017.8122756',
-  'https://doi.org/10.1109/IROS.2013.6696437'
+  'https://doi.org/10.1109/IROS.2013.6696437',
+  'https://doi.org/10.3390/jsan6040022'
   // 'https://doi.org/10.18653/v1/2020.coling-main.448'
 ];
 
@@ -28,7 +29,7 @@ const mkGraph = (edges) => {
   });
 
   edges.forEach((e, i) => {
-    if (!check.has(`${e.s}-${e.o}`)) {
+    if (!check.has(`${e.s}-${e.o}`) && !check.has(`${e.o}-${e.s}`)) {
       graph.addEdgeWithKey(`${e.p}-${i}`, e.s, e.o, { label: e.p });
       check.add(`${e.s}-${e.o}`)
     }
