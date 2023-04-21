@@ -1,12 +1,13 @@
 import request from "superagent";
 import {useEffect, useState} from "react";
-import Graph from "graphology";
-import {SigmaContainer, useLoadGraph} from "@react-sigma/core";
+import MultiDirectedGraph from "graphology";
+import {SigmaContainer, useLoadGraph, useRegisterEvents, useSigma} from "@react-sigma/core";
 import {useWorkerLayoutForceAtlas2} from "@react-sigma/layout-forceatlas2";
 import {useLayoutCircular} from "@react-sigma/layout-circular";
 import "@react-sigma/core/lib/react-sigma.min.css";
 
 import './App.css';
+import {useLayoutForce} from "@react-sigma/layout-force";
 
 const exampleDois = [
   'https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491',
@@ -32,21 +33,86 @@ const ForceAtlas2Layout = () => {
   return null;
 };
 
+const GraphEvents = () => {
+  const registerEvents = useRegisterEvents();
+  const sigma = useSigma();
+  const [draggedNode, setDraggedNode] = useState(null);
+
+  useEffect(() => {
+    // Register the events
+    registerEvents({
+      downNode: (e) => {
+        setDraggedNode(e.node);
+        sigma.getGraph().setNodeAttribute(e.node, "highlighted", true);
+      },
+      mouseup: (e) => {
+        if (draggedNode) {
+          setDraggedNode(null);
+          sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
+        }
+      },
+      mousedown: (e) => {
+        // Disable the autoscale at the first down interaction
+        if (!sigma.getCustomBBox()) sigma.setCustomBBox(sigma.getBBox());
+      },
+      mousemove: (e) => {
+        if (draggedNode) {
+          // Get new position of node
+          const pos = sigma.viewportToGraph(e);
+          sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
+          sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
+
+          // Prevent sigma to move camera:
+          e.preventSigmaDefault();
+          e.original.preventDefault();
+          e.original.stopPropagation();
+        }
+      },
+      touchup: (e) => {
+        if (draggedNode) {
+          setDraggedNode(null);
+          sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
+        }
+      },
+      touchdown: (e) => {
+        // Disable the autoscale at the first down interaction
+        if (!sigma.getCustomBBox()) sigma.setCustomBBox(sigma.getBBox());
+      },
+      touchmove: (e) => {
+        if (draggedNode) {
+          // Get new position of node
+          const pos = sigma.viewportToGraph(e);
+          sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
+          sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
+
+          // Prevent sigma to move camera:
+          e.preventSigmaDefault();
+          e.original.preventDefault();
+          e.original.stopPropagation();
+        }
+      },
+    });
+  }, [registerEvents, sigma, draggedNode]);
+
+  return null;
+};
+
+const StatementsGraph = ({ graph }) => {
+  const { positions, assign } = useLayoutCircular();
+  // const { positions, assign } = useLayoutForce();
+  const loadGraph = useLoadGraph();
+
+  useEffect(() => {
+    loadGraph(graph);
+    assign();
+  }, [loadGraph, assign, positions, graph]);
+
+  return null;
+};
+
 const App = () => {
   const [doi, setDoi] = useState('');
-  const [graph, setGraph] = useState(new Graph());
-
-  const StatementsGraph = ({ graph }) => {
-    const { positions, assign } = useLayoutCircular();
-    const loadGraph = useLoadGraph();
-
-    useEffect(() => {
-      loadGraph(graph);
-      assign();
-    }, [loadGraph, graph]);
-
-    return null;
-  };
+  const [graph, setGraph] = useState(new MultiDirectedGraph());
 
   useEffect(() => {
     if (doi) {
@@ -58,7 +124,7 @@ const App = () => {
           const edges = res.body.data;
           const nodes = new Set(edges.map(e => e.s).concat(edges.map(e => e.o)));
 
-          const graph = new Graph();
+          const graph = new MultiDirectedGraph();
 
           nodes.forEach(n => {
             graph.addNode(n, { x: 0, y: 0, size: 15, label: n, color: "#FA4F40" });
@@ -103,9 +169,10 @@ const App = () => {
         </div>
       </div>
       <div className="App-content">
-        <SigmaContainer style={{ flex: 1, height: "auto", width: "auto" }}>
+        <SigmaContainer style={{ flex: 1, height: "auto", width: "auto" }} graph={MultiDirectedGraph}>
           <StatementsGraph graph={graph} />
-          <ForceAtlas2Layout />
+          {/*<ForceAtlas2Layout />*/}
+          <GraphEvents />
         </SigmaContainer>
       </div>
     </div>
