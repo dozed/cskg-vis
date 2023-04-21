@@ -88,7 +88,5 @@ app.add_middleware(
 @app.get("/api/statements/by-doi/{doi:path}", tags=["root"])
 async def read_root(doi) -> dict:
     full_doi = f'https://doi.org/{doi}'
-    # res = get_statements('https://doi.org/10.18653/v1/2020.coling-main.448')
-    # res = get_statements('https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491')
     res = get_statements(full_doi)
     return res
