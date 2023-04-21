@@ -1,7 +1,6 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 
 def cleanup_uri_1(txt: str) -> str:
@@ -93,6 +92,3 @@ async def read_root(doi) -> dict:
     # res = get_statements('https://doi.org/10.5591/978-1-57735-516-8/IJCAI11-491')
     res = get_statements(full_doi)
     return res
-
-
-app.mount("/", StaticFiles(directory="static/", html=True), name="static")
